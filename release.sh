@@ -1,6 +1,5 @@
 #!/bin/bash
 
-cd AccSide/
 # Execute your command
 
 python manage.py migrate
