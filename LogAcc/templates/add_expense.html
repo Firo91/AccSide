@@ -8,7 +8,7 @@
         
         <div class="form-group">
             <label for="{{ form.title.id_for_label }}">Title</label>
-            <input type="text" name="{{ form.title.name }}" id="{{ form.title.auto_id }}" class="form-control" value="{{ form.title.value }}" {% if form.title.field.required %}required{% endif %}>
+            <input type="text" name="{{ form.title.name }}" id="{{ form.title.auto_id }}" class="form-control" value="{{ form.title.value }}" {% if form.title.field.required %}required{% endif %}placeholder="Enter the title here">
             {% if form.title.errors %}
                 <div class="invalid-feedback">
                     {{ form.title.errors.0 }}
@@ -18,7 +18,7 @@
         
         <div class="form-group">
             <label for="{{ form.notes.id_for_label }}">Notes</label>
-            <textarea name="{{ form.notes.name }}" id="{{ form.notes.auto_id }}" class="form-control" rows="3" {% if form.notes.field.required %}required{% endif %}>{{ form.notes.value }}</textarea>
+            <textarea name="{{ form.notes.name }}" id="{{ form.notes.auto_id }}" class="form-control" rows="3" {% if form.notes.field.required %}required{% endif %}placeholder="Enter some notes here">{{ form.notes.value }}</textarea>
             {% if form.notes.errors %}
                 <div class="invalid-feedback">
                     {{ form.notes.errors.0 }}
@@ -28,7 +28,7 @@
         
         <div class="form-group">
             <label for="{{ form.amount.id_for_label }}">Amount</label>
-            <input type="number" name="{{ form.amount.name }}" id="{{ form.amount.auto_id }}" class="form-control" value="{{ form.amount.value }}" {% if form.amount.field.required %}required{% endif %}>
+            <input type="number" name="{{ form.amount.name }}" id="{{ form.amount.auto_id }}" class="form-control" value="{{ form.amount.value }}" {% if form.amount.field.required %}required{% endif %}placeholder="Enter the value here">
             {% if form.amount.errors %}
                 <div class="invalid-feedback">
                     {{ form.amount.errors.0 }}
