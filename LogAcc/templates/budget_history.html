@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Budget History</h2>
+    <div class="list-group">
+        {% for item in history %}
+        <a href="#" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">Change Date: {{ item.date_set }}</h5>
+                <small class="text-muted">NOK: {{ item.old_value }}</small>
+            </div>
+        </a>
+        {% empty %}
+        <p class="text-muted">No budget history available.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

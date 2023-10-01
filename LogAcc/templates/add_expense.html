@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Add an Expense</h2>
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="{{ form.title.id_for_label }}">Title</label>
+            <input type="text" name="{{ form.title.name }}" id="{{ form.title.auto_id }}" class="form-control" value="{{ form.title.value }}" {% if form.title.field.required %}required{% endif %}>
+            {% if form.title.errors %}
+                <div class="invalid-feedback">
+                    {{ form.title.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.notes.id_for_label }}">Notes</label>
+            <textarea name="{{ form.notes.name }}" id="{{ form.notes.auto_id }}" class="form-control" rows="3" {% if form.notes.field.required %}required{% endif %}>{{ form.notes.value }}</textarea>
+            {% if form.notes.errors %}
+                <div class="invalid-feedback">
+                    {{ form.notes.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.amount.id_for_label }}">Amount</label>
+            <input type="number" name="{{ form.amount.name }}" id="{{ form.amount.auto_id }}" class="form-control" value="{{ form.amount.value }}" {% if form.amount.field.required %}required{% endif %}>
+            {% if form.amount.errors %}
+                <div class="invalid-feedback">
+                    {{ form.amount.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+    <div class="button-container d-flex justify-content-between">
+        <button type="submit" class="btn btn-primary">Add</button>
+        <a href="{% url 'home' %}" class="btn btn-primary">Back to main page</a>
+    </div>
+    </form>
+</div>
+{% endblock %}
+

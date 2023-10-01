@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="text-center">
+        <h2 class="mb-4">Budget Locked</h2>
+        <p class="alert alert-warning">{{ message }}</p>
+        <a href="{% url 'home' %}" class="btn btn-primary">Go Back to Home</a>
+    </div>
+</div>
+{% endblock %}
