@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 
 class Team(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    users = models.ManyToManyField(User, related_name='teams')
     name = models.CharField(max_length=255)
 
 class Budget(models.Model):
@@ -30,6 +30,7 @@ class Expense(models.Model):
     notes = models.TextField(blank=True, null=True, help_text="Additional notes or details about the expense")
     amount = models.DecimalField(max_digits=10, decimal_places=0)
     date = models.DateField(auto_now_add=True)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
 
     class Meta:
         # If you already have a Meta class, simply add to the permissions list.
