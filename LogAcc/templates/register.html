@@ -2,6 +2,18 @@
 
 {% block content %}
 <h2>Register</h2>
+
+{% if form.errors %}
+    <p>There were errors in your submission:</p>
+    <ul>
+        {% for field in form %}
+            {% for error in field.errors %}
+                <li>{{ field.label }}: {{ error }}</li>
+            {% endfor %}
+        {% endfor %}
+    </ul>
+{% endif %}
+
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}

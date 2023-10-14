@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from django.template import loader
-from django.views import View
+from django.urls import reverse_lazy
+from django.views import View, generic
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.contrib.auth.decorators import permission_required
@@ -9,7 +10,7 @@ import openpyxl
 from openpyxl.utils.dataframe import dataframe_to_rows
 import pandas as pd
 from .models import Expense, User
-from .forms import ExpenseForm, RegisterForm, BudgetForm
+from .forms import ExpenseForm, TeamUserCreationForm, BudgetForm
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -17,6 +18,7 @@ from django.views.generic import TemplateView
 import datetime
 from datetime import date, timedelta
 from django.db.models import Sum
+from django.contrib import messages
 
 class HomePageView(TemplateView):
     template_name = 'homepage.html'
@@ -113,22 +115,28 @@ def add_expense(request):
         if form.is_valid():
             expense = form.save(commit=False)
             expense.user = request.user
+            # Assume user is part of a team and take the first one
+            expense.team = request.user.teams.first()  
             expense.save()
-            # Redirect to home after saving
             return redirect('home')
     else:
         form = ExpenseForm()
     return render(request, 'add_expense.html', {'form': form})
 
-def register_view(request):
-    if request.method == 'POST':
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('login')  # Redirect to login page after successful registration
-    else:
-        form = RegisterForm()
-    return render(request, 'register.html', {'form': form})
+class register_view(generic.CreateView):
+    form_class = TeamUserCreationForm
+    success_url = reverse_lazy('login')  # Redirect to your login page after successful registration
+    template_name = 'register.html'  # Path to your registration template
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "You've successfully registered!")
+        return response
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        messages.error(self.request, "There was an error in your registration.")
+        return response
 
 def login_view(request):
     if request.method == 'POST':
@@ -150,35 +158,35 @@ def set_budget(request):
     current_year = date.today().year
     budget_instance = None
 
-    try:
-        # Check if a budget has been set for the current month and year
-        budget_instance = Budget.objects.get(date_set__month=current_month, date_set__year=current_year)
+    # Assume user is part of a team and take the first one
+    user_team = request.user.teams.first()
 
-        # Check if budget is locked
+    if not user_team:
+        # Handle case where user is not part of any team
+        # Maybe redirect them to a page where they can create/join a team
+        return redirect('choose_team')
+
+    try:
+        # Check if a budget has been set for the current month, year, and team
+        budget_instance = Budget.objects.get(date_set__month=current_month, date_set__year=current_year, team=user_team)
         if budget_instance.locked and not request.user.is_staff:
             message = "Budget for this month is already set and locked."
             return render(request, 'locked_budget.html', {'message': message})
     except Budget.DoesNotExist:
         try:
-            # Fetch the budget from the previous month to pre-fill the form
             last_month = current_month - 1 or 12
             last_month_year = current_year if current_month != 1 else current_year - 1
-            budget_instance = Budget.objects.get(date_set__month=last_month, date_set__year=last_month_year)
+            budget_instance = Budget.objects.get(date_set__month=last_month, date_set__year=last_month_year, team=user_team)
         except Budget.DoesNotExist:
             pass
 
     if request.method == "POST":
-        if 'toggle_lock' in request.POST:
-            # Logic to toggle the lock status
+        if 'toggle_lock' in request.POST and budget_instance:
             budget_instance.locked = not budget_instance.locked
             budget_instance.save()
-            
-            # Log the button press action to the ButtonPressLog
             ButtonPressLog.objects.create(user=request.user, action="Toggle Lock")
-
-            return redirect('set_budget')  # Redirect back to the same page
+            return redirect('set_budget')  
         else:
-            # Save the current budget value to the history before updating it, if it exists
             if budget_instance:
                 BudgetHistory.objects.create(user=request.user, old_value=budget_instance.monthly_limit, date_set=budget_instance.date_set)
 
@@ -186,6 +194,7 @@ def set_budget(request):
             if form.is_valid():
                 budget = form.save(commit=False)
                 budget.date_set = date.today()
+                budget.team = user_team  # Assign the team to the budget here
                 budget.save()
                 return redirect('home')
     else:
@@ -193,6 +202,15 @@ def set_budget(request):
 
     return render(request, 'set_budget.html', {'form': form, 'budget': budget_instance})
 
+
 def budget_history(request):
     history = BudgetHistory.objects.filter(user=request.user).order_by('-date_set')
     return render(request, 'budget_history.html', {'history': history})
+
+def choose_team(request):
+    if request.method == "POST":
+        team_id = request.POST.get('team_id')
+        request.session['team_id'] = team_id
+        return redirect('set_budget')
+
+    return render(request, 'choose_team.html', {'teams': request.user.teams.all()})

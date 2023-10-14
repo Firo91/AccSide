@@ -3,14 +3,20 @@ from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
+class Team(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+
 class Budget(models.Model):
-    monthly_limit = models.DecimalField(max_digits=10, decimal_places=0)
+    monthly_limit = models.DecimalField(max_digits=10, decimal_places=2)  # Allowing decimal places for cents
     date_set = models.DateField(default=timezone.now)
     locked = models.BooleanField(default=False)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)  # Associating Budget with Team
 
     def save(self, *args, **kwargs):
-        if not self.pk and Budget.objects.exists():
-            raise ValidationError('There is can be only one Budget instance')
+        # Allow only one Budget instance per team
+        if not self.pk and Budget.objects.filter(team=self.team).exists():
+            raise ValidationError('There can be only one Budget instance per team')
         return super(Budget, self).save(*args, **kwargs)
 
     class Meta:
