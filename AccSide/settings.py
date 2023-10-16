@@ -31,6 +31,8 @@ else:
 
 SECRET_KEY = env('DJANGO_SECRET_KEY')
 
+AUTH_USER_MODEL = 'LogAcc.CustomUser'
+
 # Application definition
 
 INSTALLED_APPS = [

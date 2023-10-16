@@ -3,18 +3,21 @@
 {% block content %}
 <div class="container mt-5">
     <div class="text-center">
-        <h1 class="mb-4">Welcome to the Home Accounting System</h1>
+        <h1 class="mb-4">Welcome {% if user.is_authenticated %}{{ user.username }}{% endif %} to the Budget System</h1>
     </div>
     {% if user.is_authenticated %}
         <div class="mb-3">
             <!-- Add Expense Button -->
             <a href="{% url 'logout' %}" class="btn btn-primary mr-2">Logout</a>
             <a href="{% url 'add_expense' %}" class="btn btn-primary mr-2">Add Expense</a>
-            <a href="{% url 'set_budget' %}" class="btn btn-primary">Set Budget</a>
-            <a href="{% url 'budget_history' %}" class="btn btn-primary">Budget History</a>
-            <a href="{% url 'register' %}" class="btn btn-primary">Register
+            <a href="{% url 'set_budget' %}" class="btn btn-primary mr-2">Set Budget</a>
+            <a href="{% url 'budget_history' %}" class="btn btn-primary mr-2">Budget History</a>
+            <a href="{% url 'register' %}" class="btn btn-primary mr-2">Register</a>
+                {% if user.role == "leader" %}
+                    <a href="{% url 'approve_team_members' %}" class="btn btn-primary mr-2">Approve Team Members</a>
+                {% endif %}
         </div>
-        {% if budget %}
+    {% if budget and user.is_approved %}
         <div class="card mt-4">
             <div class="card-header">
                 <h5>Budget Overview</h5>
@@ -70,41 +73,85 @@
                 </div>
             </div>
         </form>
+
+        <a href="?view=user" class="btn btn-primary">View My Expenses</a>
+        <a href="?view=team" class="btn btn-warning">View Team Expenses</a>
         
-        {% if user_expenses %}
-            <table class="table mt-3">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Title</th>
-                        <th>Notes</th>
-                        <th>Amount</th>
-                        <!-- Add more columns if you have more fields -->
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for expense in user_expenses %}
-                    <tr>
-                        <td>{{ expense.date }}</td>
-                        <td>{{ expense.title }}</td>
-                        <td>{{ expense.notes }}</td>
-                        <td>{{ expense.amount }} Kr</td>
-                        <!-- Display more fields if required -->
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        {% if user.is_approved %}
+            {% if view_type == "user" %}
+            <!-- Display user_expenses table as you showed previously -->
+                {% if user_expenses %}
+                    <table class="table mt-3">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Title</th>
+                                <th>Notes</th>
+                                <th>Team</th>
+                                <th>Amount</th>
+                                <!-- Add more columns if you have more fields -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in user_expenses %}
+                            <tr>
+                                <td>{{ expense.date }}</td>
+                                <td>{{ expense.title }}</td>
+                                <td>{{ expense.notes }}</td>
+                                <td>{{ expense.team.name }}</td>
+                                <td>{{ expense.amount }} Kr</td>
+                                <!-- Display more fields if required -->
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}     
+            {% elif view_type == "team" %}
+                <!-- Similar table structure, but use team_expenses for iteration -->
+                {% if team_expenses %}
+                    <table class="table mt-3">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Title</th>
+                                <th>Notes</th>
+                                <th>Team</th>
+                                <th>Amount</th>
+                                <!-- Add more columns if you have more fields -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in team_expenses %}
+                            <tr>
+                                <td>{{ expense.date }}</td>
+                                <td>{{ expense.title }}</td>
+                                <td>{{ expense.notes }}</td>
+                                <td>{{ expense.team.name }}</td>
+                                <td>{{ expense.amount }} Kr</td>
+                                <!-- Display more fields if required -->
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info mt-3">
+                    No expenses to display!
+                </div>
+            {% endif %}
+
         {% else %}
-            <div class="alert alert-info mt-3">
-                You haven't added any expenses yet!
-            </div>
-        {% endif %}
+            <div class="text-center">
+                <p> You are not approved for a team yet, contact your Team Leader </p>
+        {% endif %}            
     {% else %}
-        <div class="text-center">
-            <p>Please login</p>
+            <div class="text-center">
+            <p>Please login if you have a account. <br>
+            If you are a new user, ask a admin to create the access for you</p>
             <a href="{% url 'login' %}" class="btn btn-secondary">Login</a>
-        </div>
+            </div>
     {% endif %}
-</div>
+           
+ </div>
 {% endblock %}
 

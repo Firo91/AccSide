@@ -9,7 +9,7 @@ from .models import Expense, Budget, ButtonPressLog, BudgetHistory
 import openpyxl
 from openpyxl.utils.dataframe import dataframe_to_rows
 import pandas as pd
-from .models import Expense, User
+from .models import Expense, CustomUser, Team, UserRole
 from .forms import ExpenseForm, TeamUserCreationForm, BudgetForm
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm
@@ -19,35 +19,43 @@ import datetime
 from datetime import date, timedelta
 from django.db.models import Sum
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 class HomePageView(TemplateView):
     template_name = 'homepage.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.request.user.is_authenticated:  # check if user is authenticated
+        user = self.request.user
+        view_type = self.request.GET.get('view', 'user')  # Default to 'user' if not specified
+
+        if user.is_authenticated:
             try:
-                context['budget'] = Budget.objects.latest('date_set')
-                
-                # Calculate total expenses for all users
-                total_expenses = Expense.objects.all().aggregate(Sum('amount'))['amount__sum'] or 0
+                user_team = user.team
+                context['budget'] = Budget.objects.filter(team=user_team).latest('date_set')
+
+                total_expenses = Expense.objects.filter(team=user_team).aggregate(Sum('amount'))['amount__sum'] or 0
                 context['amount_spent'] = total_expenses
                 context['remaining'] = context['budget'].monthly_limit - total_expenses
 
-            except Budget.DoesNotExist:
+            except (Budget.DoesNotExist, AttributeError):  
                 context['budget'] = None
                 context['amount_spent'] = 0
                 context['remaining'] = None
 
-            # Fetching expenses of the authenticated user
-            context['user_expenses'] = Expense.objects.filter(user=self.request.user)
+            if view_type == "user":
+                context['user_expenses'] = Expense.objects.filter(user=user)
+            elif view_type == "team":
+                context['team_expenses'] = Expense.objects.filter(team=user_team)
+            context['view_type'] = view_type
 
         else:
-            context['budget'] = None  # or whatever default behavior you want for anonymous users
-            context['user_expenses'] = []  # an empty list for expenses
+            context['budget'] = None
+            context['user_expenses'] = []
+            context['team_expenses'] = []
 
         return context
-    
+ 
 def export_to_excel(request, username=None):
     year = request.GET.get('year', None)
     month = request.GET.get('month', None)
@@ -60,7 +68,7 @@ def export_to_excel(request, username=None):
     day = int(day) if day else today.day
 
     if username:
-        target_user = User.objects.get(username=username)
+        target_user = CustomUser.objects.get(username=username)
         expenses = Expense.objects.filter(user=target_user)
     else:
         # Check if the user has permission to export all data
@@ -116,7 +124,7 @@ def add_expense(request):
             expense = form.save(commit=False)
             expense.user = request.user
             # Assume user is part of a team and take the first one
-            expense.team = request.user.teams.first()  
+            expense.team = request.user.team
             expense.save()
             return redirect('home')
     else:
@@ -159,7 +167,7 @@ def set_budget(request):
     budget_instance = None
 
     # Assume user is part of a team and take the first one
-    user_team = request.user.teams.first()
+    user_team = request.user.team
 
     if not user_team:
         # Handle case where user is not part of any team
@@ -211,6 +219,29 @@ def choose_team(request):
     if request.method == "POST":
         team_id = request.POST.get('team_id')
         request.session['team_id'] = team_id
+        
+        # Update the user's team in the database
+        user = request.user
+        user.team = Team.objects.get(id=team_id)
+        user.save()
+        
         return redirect('set_budget')
 
-    return render(request, 'choose_team.html', {'teams': request.user.teams.all()})
+    teams = Team.objects.all()  # Query all available teams
+    return render(request, 'choose_team.html', {'teams': teams})
+
+@login_required
+def approve_team_members(request):
+    # Check if user is a team leader
+    if request.user.role != UserRole.TEAM_LEADER:
+        return HttpResponse("Access denied: You are not a team leader.")
+
+    if request.method == "POST":
+        member_id = request.POST.get('member_id')
+        member = CustomUser.objects.get(id=member_id)
+        member.is_approved = True
+        member.save()
+
+    # Get all unapproved members in the team leader's team
+    members_to_approve = CustomUser.objects.filter(team=request.user.team, is_approved=False)
+    return render(request, 'approve_team_members.html', {'members_to_approve': members_to_approve})

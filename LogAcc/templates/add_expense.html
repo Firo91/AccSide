@@ -35,6 +35,15 @@
                 </div>
             {% endif %}
         </div>
+        <div class="form-group">
+            <label for="{{ form.date.id_for_label }}">Date</label>
+            <input type="date" name="{{ form.date.name }}" id="{{ form.date.auto_id }}" class="form-control" value="{{ form.date.value|default:'' }}" {% if form.date.field.required %}required{% endif %}placeholder="Select a date">
+            {% if form.date.errors %}
+                <div class="invalid-feedback">
+                    {{ form.date.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
     <div class="button-container d-flex justify-content-between">
         <button type="submit" class="btn btn-primary">Add</button>
         <a href="{% url 'home' %}" class="btn btn-primary">Back to main page</a>
@@ -42,4 +51,3 @@
     </form>
 </div>
 {% endblock %}
-

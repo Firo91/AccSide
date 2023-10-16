@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Approve Team Members</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <label for="member_id">Select a member to approve:</label>
+    <select name="member_id" id="member_id">
+        {% for member in members_to_approve %} 
+            <option value="{{ member.id }}">{{ member.username }} - {{ member.team.name }}</option>
+        {% endfor %}
+    </select>
+    <div class="button-container d-flex justify-content-between">
+        <button type="submit" class="btn btn-primary">Approve</button>
+        <a href="{% url 'home' %}" class="btn btn-primary">Back to main page</a>
+    </div>
+</form>
+{% endblock %}

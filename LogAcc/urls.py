@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import choose_team ,HomePageView, budget_history, export_to_excel, set_budget, add_expense, login_view, register_view, logout_view
+from . import views
 
 urlpatterns = [
     path('', HomePageView.as_view(), name='home'),
@@ -12,4 +13,5 @@ urlpatterns = [
     path('export_to_excel/<str:username>/', export_to_excel, name='export_to_excel_user'),
     path('budget_history/', budget_history, name='budget_history'),
     path('choose_team/', choose_team, name='choose_team'),
+    path('approve_team_members/', views.approve_team_members, name='approve_team_members'),
 ]

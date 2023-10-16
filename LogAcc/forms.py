@@ -1,11 +1,15 @@
 from django import forms
-from .models import Expense, User, Budget, Team
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-
+from .models import Expense, Budget, Team, CustomUser
+from django.contrib.auth.forms import UserCreationForm
+import datetime
 class ExpenseForm(forms.ModelForm):
+    date = forms.DateField(
+        widget=forms.SelectDateWidget,
+        initial=datetime.date.today  # This sets today's date as default
+    )
     class Meta:
         model = Expense
-        fields = ['title', 'notes', 'amount']  # Assuming these fields exist in your Expense model
+        fields = ['title', 'notes', 'amount', 'date'] # Assuming these fields exist in your Expense model
 
 class TeamUserCreationForm(UserCreationForm):
     team_name = forms.CharField(required=True)
@@ -16,7 +20,7 @@ class TeamUserCreationForm(UserCreationForm):
     )
 
     class Meta:
-        model = User
+        model = CustomUser
         fields = ("username", "team_name", "create_new_team", "password1", "password2")
 
     def clean(self):
@@ -44,12 +48,16 @@ class TeamUserCreationForm(UserCreationForm):
             
             if create_new_team:
                 # Create a new team and associate with the user
-                Team.objects.create(name=team_name)
+                team = Team.objects.create(name=team_name)
             else:
                 # Associate the user with the existing team
                 team = Team.objects.get(name=team_name)
             
-            # Additional code for assigning the user to the team, if needed
+            # You may want to associate the user with a team here. As of the provided
+            # CustomUser model, a user is associated with a team through a ForeignKey.
+            # So you can do this:
+            user.team = team
+            user.save()
 
         return user
 
@@ -57,3 +65,11 @@ class BudgetForm(forms.ModelForm):
     class Meta:
         model = Budget
         fields = ['monthly_limit']
+        
+class CustomUserAdminForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
