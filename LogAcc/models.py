@@ -13,6 +13,8 @@ class Team(models.Model):
     name = models.CharField(max_length=255)
     users = models.ManyToManyField('LogAcc.CustomUser', related_name='teams')
 
+    def __str__(self):
+        return self.name
 class Budget(models.Model):
     monthly_limit = models.DecimalField(max_digits=10, decimal_places=0)
     date_set = models.DateField(default=timezone.now)
