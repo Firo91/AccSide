@@ -11,17 +11,17 @@
         <form method="post" class="needs-validation" novalidate>
             {% csrf_token %}
         
-            {% for field in form %}
-                <div class="form-group">
-                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.auto_id }}" class="form-control" value="{{ field.value }}" {% if field.field.required %}required{% endif %}>
-                    {% if field.errors %}
-                        <div class="invalid-feedback">
-                            {{ field.errors.0 }}
-                        </div>
-                    {% endif %}
-                </div>
-            {% endfor %}
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <div class="invalid-feedback">
+                        {{ field.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
         <div class="button-container d-flex justify-content-between">    
             <button type="submit" class="btn btn-primary">Set Budget</button>
         </form>

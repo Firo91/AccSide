@@ -35,6 +35,20 @@
                 </div>
             {% endif %}
         </div>
+
+        <div class="form-group">
+            <label for="{{ form.team.id_for_label }}">Team</label>
+            <select name="{{ form.team.name }}" id="{{ form.team.auto_id }}" class="form-control" {% if form.team.field.required %}required{% endif %}>
+                {% for team in form.team.field.queryset %}
+                    <option value="{{ team.pk }}" {% if team.pk == form.team.value %}selected{% endif %}>{{ team.name }}</option>
+                {% endfor %}
+            </select>
+            {% if form.team.errors %}
+                <div class="invalid-feedback">
+                    {{ form.team.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
     <div class="button-container d-flex justify-content-between">
         <button type="submit" class="btn btn-primary">Add</button>
         <a href="{% url 'home' %}" class="btn btn-primary">Back to main page</a>
